@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulação 3D: Sinapses Neurais</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0a0a0a, #1a1a2e, #16213e);
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            color: white;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        .info-panel {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 350px;
+            pointer-events: auto;
+        }
+        
+        .info-panel h2 {
+            color: #00aaff;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .info-panel p {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #cccccc;
+            margin-bottom: 10px;
+        }
+        
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+        }
+        
+        .control-button {
+            background: linear-gradient(45deg, #0066cc, #0099ff);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .control-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 150, 255, 0.4);
+        }
+        
+        .floating-label {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: #00ff88;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            pointer-events: none;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+        
+        .process-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 100, 0, 0.3);
+            backdrop-filter: blur(10px);
+            min-width: 200px;
+        }
+        
+        .process-step {
+            margin: 8px 0;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 13px;
+            transition: all 0.3s ease;
+        }
+        
+        .process-step.active {
+            background: rgba(255, 100, 0, 0.2);
+            color: #ff6400;
+            border-left: 3px solid #ff6400;
+        }
+        
+        .legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 20, 40, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 150, 255, 0.3);
+            backdrop-filter: blur(10px);
+            max-width: 300px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 10px;
+        }
+        
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 18px;
+            color: #00aaff;
+        }
+        
+        .loading::after {
+            content: '';
+            display: block;
+            margin: 20px auto;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 170, 255, 0.3);
+            border-top: 3px solid #00aaff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="canvas-container"></div>
+        
+        <div id="ui-overlay">
+            <div class="info-panel">
+                <h2>🧠 Simulação Neural 3D</h2>
+                <p><strong>Sinapse em Ação:</strong> Observe a transmissão do impulso nervoso entre neurônios através das sinapses químicas.</p>
+                <p><strong>Neurotransmissores:</strong> Vesículas contendo dopamina e glutamato atravessam a fenda sináptica.</p>
+                <p><strong>Potencial de Ação:</strong> Impulsos elétricos viajam pelo axônio através da despolarização da membrana.</p>
+            </div>
+            
+            <div class="controls">
+                <h3 style="color: #00aaff; margin-bottom: 10px;">Controles</h3>
+                <button class="control-button" id="playPause">▶ Iniciar Simulação</button>
+                <button class="control-button" id="resetSim">🔄 Reiniciar</button>
+                <button class="control-button" id="zoomSynapse">🔍 Zoom Sinapse</button>
+                <button class="control-button" id="toggleLabels">🏷 Legendas</button>
+            </div>
+            
+            <div class="process-indicator">
+                <h3 style="color: #ff6400; margin-bottom: 10px;">Processo Sináptico</h3>
+                <div class="process-step" id="step1">1. Impulso no Axônio</div>
+                <div class="process-step" id="step2">2. Abertura de Canais Ca²⁺</div>
+                <div class="process-step" id="step3">3. Liberação de Neurotransmissores</div>
+                <div class="process-step" id="step4">4. Ligação aos Receptores</div>
+                <div class="process-step" id="step5">5. Despolarização Pós-sináptica</div>
+            </div>
+            
+            <div class="legend">
+                <h3 style="color: #00aaff; margin-bottom: 10px;">Legenda</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #00ff88;"></div>
+                    <span>Impulso Elétrico</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff4444;"></div>
+                    <span>Neurotransmissores</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffaa00;"></div>
+                    <span>Canais Iônicos</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #8888ff;"></div>
+                    <span>Receptores</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff88ff;"></div>
+                    <span>Vesículas Sinápticas</span>
+                </div>
+            </div>
+        </div>
+        
+        <div id="loading" class="loading">
+            Carregando Simulação Neural...
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.7.9/dat.gui.min.js"></script>
+    <script src="neural-simulation.js"></script>
+</body>
+</html>
