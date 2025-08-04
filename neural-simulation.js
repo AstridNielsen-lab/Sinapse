@@ -700,7 +700,7 @@ class NeuralSimulation {
     startActionPotential() {
         const actionPotential = {
             position: -8,
-            speed: 0.050, // Muito mais rápido para fluidez total
+            speed: 0.035, // Velocidade balanceada para ver todos os processos
             amplitude: 1,
             active: true
         };
@@ -728,21 +728,21 @@ class NeuralSimulation {
             if (ap.active) {
                 ap.position += ap.speed;
                 
-                // Create visual effect for action potential - efeito contínuo
-                if (ap.position >= -3 && ap.position <= 3) {
+                // Create visual effect for action potential - efeito mais controlado
+                if (ap.position >= -2.5 && ap.position <= 2.5) {
                     this.createElectricalEffect(ap.position);
                 }
                 
-                // Trigger calcium channels when AP reaches synapse - transição mais cedo
-                if (ap.position >= -1.5 && this.currentStep === 1) {
+                // Trigger calcium channels when AP reaches synapse - timing ajustado
+                if (ap.position >= -1.2 && this.currentStep === 1) {
                     this.openCalciumChannels();
-                    this.updateProcessIndicator(2);
+                    setTimeout(() => this.updateProcessIndicator(2), 300); // Delay para visualizar
                 }
                 
-                // Release neurotransmitters - transição mais cedo
-                if (ap.position >= -0.5 && this.currentStep === 2) {
+                // Release neurotransmitters - timing ajustado
+                if (ap.position >= -0.3 && this.currentStep === 2) {
                     this.releaseNeurotransmitters();
-                    this.updateProcessIndicator(3);
+                    setTimeout(() => this.updateProcessIndicator(3), 400); // Delay para visualizar
                 }
                 
                 // Remove if traveled far enough
@@ -785,11 +785,11 @@ class NeuralSimulation {
         effectLight.position.set(position, 0, 0);
         this.scene.add(effectLight);
         
-        // Animate and remove effect - duração mínima para fluidez
+        // Animate and remove effect - duração visível
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 400; // Duração reduzida para 400ms
+            const progress = elapsed / 600; // Duração aumentada para 600ms
             
             if (progress < 1) {
                 // Efeito principal pulsa
@@ -867,9 +867,9 @@ class NeuralSimulation {
             particle.add(particleLight);
             
             particle.userData = {
-                velocity: new THREE.Vector3(0.040, (Math.random() - 0.5) * 0.008, (Math.random() - 0.5) * 0.008), // Movimento muito mais rápido
+                velocity: new THREE.Vector3(0.025, (Math.random() - 0.5) * 0.006, (Math.random() - 0.5) * 0.006), // Movimento mais controlado
                 startTime: this.time,
-                lifetime: 1500, // Duração muito reduzida
+                lifetime: 2500, // Duração aumentada para visualizar
                 originalScale: 1
             };
             
@@ -894,10 +894,10 @@ class NeuralSimulation {
                 const pulseEffect = Math.sin(this.time * 0.01 + index) * 0.2 + 1;
                 nt.scale.setScalar(nt.userData.originalScale * pulseEffect);
                 
-                // Check for receptor binding - detecção mais cedo
-                if (nt.position.x > 0.4 && this.currentStep === 3) {
+                // Check for receptor binding - detecção controlada
+                if (nt.position.x > 0.6 && this.currentStep === 3) {
                     this.bindToReceptor(nt);
-                    this.updateProcessIndicator(4);
+                    setTimeout(() => this.updateProcessIndicator(4), 200); // Delay para visualizar
                 }
                 
                 // Fade out mais suave
@@ -933,11 +933,11 @@ class NeuralSimulation {
                 }
             });
             
-            // Trigger postsynaptic response - resposta imediata
+            // Trigger postsynaptic response - resposta visível
             setTimeout(() => {
                 this.triggerPostsynapticResponse();
-                this.updateProcessIndicator(5);
-            }, 100); // Resposta quase instantânea
+                setTimeout(() => this.updateProcessIndicator(5), 300); // Delay para visualizar
+            }, 500); // Tempo para visualizar ligação
         }
     }
     
@@ -995,11 +995,11 @@ class NeuralSimulation {
         depolarLight.position.set(1, 0, 0);
         this.scene.add(depolarLight);
         
-        // Animate effect - duração mínima
+        // Animate effect - duração visível
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 600; // Duração reduzida para 600ms
+            const progress = elapsed / 1000; // Duração aumentada para 1000ms
             
             if (progress < 1) {
                 // Efeito principal pulsa
@@ -1024,11 +1024,11 @@ class NeuralSimulation {
                 waves.forEach(wave => this.scene.remove(wave));
                 this.scene.remove(depolarLight);
                 
-                // Reset for next cycle if still playing - transição imediata
+                // Reset for next cycle if still playing - pausa visível
                 if (this.isPlaying) {
                     setTimeout(() => {
                         this.resetForNextCycle();
-                    }, 200); // Tempo mínimo entre ciclos
+                    }, 800); // Tempo para visualizar despolarização
                 }
             }
         };
@@ -1061,11 +1061,11 @@ class NeuralSimulation {
             }
         });
         
-        // Start new action potential - ciclo contínuo
+        // Start new action potential - ciclo educativo
         if (this.isPlaying) {
             setTimeout(() => {
                 this.startActionPotential();
-            }, 1200); // Ciclo muito mais rápido
+            }, 2000); // Pausa entre ciclos para observação
         }
     }
     
