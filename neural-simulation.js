@@ -642,7 +642,7 @@ class NeuralSimulation {
     startActionPotential() {
         const actionPotential = {
             position: -8,
-            speed: 0.02,
+            speed: 0.008, // Reduzido de 0.02 para 0.008 (mais lento)
             amplitude: 1,
             active: true
         };
@@ -696,30 +696,61 @@ class NeuralSimulation {
     }
     
     createElectricalEffect(position) {
-        const effectGeometry = new THREE.SphereGeometry(0.3, 8, 8);
+        // Efeito principal mais visível
+        const effectGeometry = new THREE.SphereGeometry(0.6, 16, 16); // Maior e mais detalhado
         const effectMaterial = new THREE.MeshBasicMaterial({
             color: 0x00ff88,
             transparent: true,
-            opacity: 0.8
+            opacity: 1.0 // Mais opaco inicialmente
         });
         
         const effect = new THREE.Mesh(effectGeometry, effectMaterial);
         effect.position.set(position, 0, 0);
-        
         this.scene.add(effect);
         
-        // Animate and remove effect
+        // Efeito de ondas concêntricas
+        const waveGeometry = new THREE.RingGeometry(0.5, 1.0, 16);
+        const waveMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00aaff,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        
+        const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+        wave.position.set(position, 0, 0);
+        wave.rotation.x = Math.PI / 2;
+        this.scene.add(wave);
+        
+        // Adicionar luz pontual para o efeito
+        const effectLight = new THREE.PointLight(0x00ff88, 2, 5);
+        effectLight.position.set(position, 0, 0);
+        this.scene.add(effectLight);
+        
+        // Animate and remove effect - duração maior
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 500;
+            const progress = elapsed / 1200; // Duração aumentada de 500ms para 1200ms
             
             if (progress < 1) {
-                effect.scale.setScalar(1 + progress * 2);
-                effect.material.opacity = 0.8 * (1 - progress);
+                // Efeito principal pulsa
+                const pulse = Math.sin(progress * Math.PI * 4) * 0.3 + 1;
+                effect.scale.setScalar(pulse);
+                effect.material.opacity = 1.0 * (1 - progress * 0.7);
+                
+                // Ondas se expandem
+                wave.scale.setScalar(1 + progress * 3);
+                wave.material.opacity = 0.6 * (1 - progress);
+                
+                // Luz pulsa
+                effectLight.intensity = 2 * (1 - progress * 0.5) * pulse;
+                
                 requestAnimationFrame(animate);
             } else {
                 this.scene.remove(effect);
+                this.scene.remove(wave);
+                this.scene.remove(effectLight);
             }
         };
         animate();
@@ -753,26 +784,35 @@ class NeuralSimulation {
     }
     
     createNeurotransmitterParticles(startPosition) {
-        for (let i = 0; i < 5; i++) {
-            const particleGeometry = new THREE.SphereGeometry(0.03, 6, 6);
-            const particleMaterial = new THREE.MeshBasicMaterial({
+        for (let i = 0; i < 8; i++) { // Mais partículas
+            const particleGeometry = new THREE.SphereGeometry(0.06, 12, 12); // Partículas maiores e mais detalhadas
+            const particleMaterial = new THREE.MeshPhysicalMaterial({
                 color: 0xff4444,
                 transparent: true,
-                opacity: 0.9
+                opacity: 0.9,
+                emissive: 0x442222,
+                emissiveIntensity: 0.4,
+                roughness: 0.1,
+                metalness: 0.2
             });
             
             const particle = new THREE.Mesh(particleGeometry, particleMaterial);
             particle.position.copy(startPosition);
             particle.position.add(new THREE.Vector3(
-                (Math.random() - 0.5) * 0.2,
-                (Math.random() - 0.5) * 0.2,
-                (Math.random() - 0.5) * 0.2
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3,
+                (Math.random() - 0.5) * 0.3
             ));
             
+            // Adicionar luz às partículas para maior visibilidade
+            const particleLight = new THREE.PointLight(0xff4444, 0.5, 2);
+            particle.add(particleLight);
+            
             particle.userData = {
-                velocity: new THREE.Vector3(0.02, 0, 0),
+                velocity: new THREE.Vector3(0.008, (Math.random() - 0.5) * 0.002, (Math.random() - 0.5) * 0.002), // Movimento mais lento e ligeiramente aleatório
                 startTime: this.time,
-                lifetime: 3000
+                lifetime: 5000, // Duração maior
+                originalScale: 1
             };
             
             this.synapses[0].add(particle);
@@ -788,15 +828,28 @@ class NeuralSimulation {
                 // Move across synaptic cleft
                 nt.position.add(nt.userData.velocity);
                 
+                // Adicionar movimento de flutuação
+                const floatEffect = Math.sin((this.time + index * 100) * 0.005) * 0.05;
+                nt.position.y += floatEffect * 0.1;
+                
+                // Efeito de pulsação
+                const pulseEffect = Math.sin(this.time * 0.01 + index) * 0.2 + 1;
+                nt.scale.setScalar(nt.userData.originalScale * pulseEffect);
+                
                 // Check for receptor binding
                 if (nt.position.x > 0.7 && this.currentStep === 3) {
                     this.bindToReceptor(nt);
                     this.updateProcessIndicator(4);
                 }
                 
-                // Fade out
+                // Fade out mais suave
                 const fadeProgress = age / nt.userData.lifetime;
-                nt.material.opacity = 0.9 * (1 - fadeProgress);
+                nt.material.opacity = 0.9 * (1 - fadeProgress * 0.8);
+                
+                // Ajustar emissão baseada na idade
+                if (nt.material.emissiveIntensity) {
+                    nt.material.emissiveIntensity = 0.4 * (1 - fadeProgress * 0.5);
+                }
             } else {
                 // Remove expired neurotransmitter
                 if (nt.parent) nt.parent.remove(nt);
@@ -850,36 +903,74 @@ class NeuralSimulation {
     }
     
     createDepolarizationEffect() {
-        const effectGeometry = new THREE.SphereGeometry(1, 16, 16);
+        // Efeito principal mais visível
+        const effectGeometry = new THREE.SphereGeometry(1.5, 32, 32);
         const effectMaterial = new THREE.MeshBasicMaterial({
             color: 0x88ff44,
             transparent: true,
-            opacity: 0.3
+            opacity: 0.6 // Mais visível
         });
         
         const effect = new THREE.Mesh(effectGeometry, effectMaterial);
         effect.position.set(1, 0, 0);
-        
         this.scene.add(effect);
         
-        // Animate effect
+        // Efeito de ondas múltiplas
+        const waves = [];
+        for (let i = 0; i < 3; i++) {
+            const waveGeometry = new THREE.SphereGeometry(0.8 + i * 0.3, 16, 16);
+            const waveMaterial = new THREE.MeshBasicMaterial({
+                color: 0x44ff88,
+                transparent: true,
+                opacity: 0.4 - i * 0.1,
+                wireframe: true
+            });
+            
+            const wave = new THREE.Mesh(waveGeometry, waveMaterial);
+            wave.position.set(1, 0, 0);
+            this.scene.add(wave);
+            waves.push(wave);
+        }
+        
+        // Luz pontual para o efeito
+        const depolarLight = new THREE.PointLight(0x88ff44, 3, 8);
+        depolarLight.position.set(1, 0, 0);
+        this.scene.add(depolarLight);
+        
+        // Animate effect - duração maior
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 1000;
+            const progress = elapsed / 2000; // Duração aumentada para 2 segundos
             
             if (progress < 1) {
-                effect.scale.setScalar(1 + progress * 0.5);
-                effect.material.opacity = 0.3 * (1 - progress);
+                // Efeito principal pulsa
+                const pulse = Math.sin(progress * Math.PI * 3) * 0.4 + 1;
+                effect.scale.setScalar(pulse);
+                effect.material.opacity = 0.6 * (1 - progress * 0.6);
+                
+                // Ondas se expandem em tempos diferentes
+                waves.forEach((wave, i) => {
+                    const waveProgress = Math.max(0, progress - i * 0.1);
+                    wave.scale.setScalar(1 + waveProgress * 2);
+                    wave.material.opacity = (0.4 - i * 0.1) * (1 - waveProgress);
+                    wave.rotation.y += 0.02;
+                });
+                
+                // Luz pulsa
+                depolarLight.intensity = 3 * (1 - progress * 0.3) * pulse;
+                
                 requestAnimationFrame(animate);
             } else {
                 this.scene.remove(effect);
+                waves.forEach(wave => this.scene.remove(wave));
+                this.scene.remove(depolarLight);
                 
                 // Reset for next cycle if still playing
                 if (this.isPlaying) {
                     setTimeout(() => {
                         this.resetForNextCycle();
-                    }, 1000);
+                    }, 2000); // Tempo maior entre ciclos
                 }
             }
         };
@@ -912,11 +1003,11 @@ class NeuralSimulation {
             }
         });
         
-        // Start new action potential
+        // Start new action potential - tempo maior entre ciclos
         if (this.isPlaying) {
             setTimeout(() => {
                 this.startActionPotential();
-            }, 2000);
+            }, 4000); // Aumentado de 2000ms para 4000ms
         }
     }
     
@@ -935,12 +1026,15 @@ class NeuralSimulation {
             this.ambientParticles.rotation.y += 0.001;
         }
         
-        // Camera orbit when in overview mode
+        // Camera orbit when in overview mode - movimento mais lento e suave
         if (this.currentCameraTarget === 'overview') {
             const radius = 15;
-            const speed = 0.001;
+            const speed = 0.0003; // Reduzido de 0.001 para 0.0003 (3x mais lento)
+            const height = 5 + Math.sin(this.time * speed * 2) * 2; // Variação suave na altura
+            
             this.camera.position.x = Math.cos(this.time * speed) * radius;
             this.camera.position.z = Math.sin(this.time * speed) * radius;
+            this.camera.position.y = height;
             this.camera.lookAt(0, 0, 0);
         }
         
