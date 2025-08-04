@@ -700,7 +700,7 @@ class NeuralSimulation {
     startActionPotential() {
         const actionPotential = {
             position: -8,
-            speed: 0.025, // Aumentado para ser mais rápido e fluido
+            speed: 0.050, // Muito mais rápido para fluidez total
             amplitude: 1,
             active: true
         };
@@ -728,19 +728,19 @@ class NeuralSimulation {
             if (ap.active) {
                 ap.position += ap.speed;
                 
-                // Create visual effect for action potential
-                if (ap.position >= -2 && ap.position <= 2) {
+                // Create visual effect for action potential - efeito contínuo
+                if (ap.position >= -3 && ap.position <= 3) {
                     this.createElectricalEffect(ap.position);
                 }
                 
-                // Trigger calcium channels when AP reaches synapse
-                if (ap.position >= -1 && ap.position <= 1 && this.currentStep === 1) {
+                // Trigger calcium channels when AP reaches synapse - transição mais cedo
+                if (ap.position >= -1.5 && this.currentStep === 1) {
                     this.openCalciumChannels();
                     this.updateProcessIndicator(2);
                 }
                 
-                // Release neurotransmitters
-                if (ap.position >= 0 && this.currentStep === 2) {
+                // Release neurotransmitters - transição mais cedo
+                if (ap.position >= -0.5 && this.currentStep === 2) {
                     this.releaseNeurotransmitters();
                     this.updateProcessIndicator(3);
                 }
@@ -785,11 +785,11 @@ class NeuralSimulation {
         effectLight.position.set(position, 0, 0);
         this.scene.add(effectLight);
         
-        // Animate and remove effect - duração otimizada
+        // Animate and remove effect - duração mínima para fluidez
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 800; // Duração otimizada para 800ms
+            const progress = elapsed / 400; // Duração reduzida para 400ms
             
             if (progress < 1) {
                 // Efeito principal pulsa
@@ -867,9 +867,9 @@ class NeuralSimulation {
             particle.add(particleLight);
             
             particle.userData = {
-                velocity: new THREE.Vector3(0.020, (Math.random() - 0.5) * 0.005, (Math.random() - 0.5) * 0.005), // Movimento mais rápido e fluido
+                velocity: new THREE.Vector3(0.040, (Math.random() - 0.5) * 0.008, (Math.random() - 0.5) * 0.008), // Movimento muito mais rápido
                 startTime: this.time,
-                lifetime: 3000, // Duração otimizada
+                lifetime: 1500, // Duração muito reduzida
                 originalScale: 1
             };
             
@@ -894,8 +894,8 @@ class NeuralSimulation {
                 const pulseEffect = Math.sin(this.time * 0.01 + index) * 0.2 + 1;
                 nt.scale.setScalar(nt.userData.originalScale * pulseEffect);
                 
-                // Check for receptor binding
-                if (nt.position.x > 0.7 && this.currentStep === 3) {
+                // Check for receptor binding - detecção mais cedo
+                if (nt.position.x > 0.4 && this.currentStep === 3) {
                     this.bindToReceptor(nt);
                     this.updateProcessIndicator(4);
                 }
@@ -933,11 +933,11 @@ class NeuralSimulation {
                 }
             });
             
-            // Trigger postsynaptic response
+            // Trigger postsynaptic response - resposta imediata
             setTimeout(() => {
                 this.triggerPostsynapticResponse();
                 this.updateProcessIndicator(5);
-            }, 300); // Resposta mais rápida
+            }, 100); // Resposta quase instantânea
         }
     }
     
@@ -995,11 +995,11 @@ class NeuralSimulation {
         depolarLight.position.set(1, 0, 0);
         this.scene.add(depolarLight);
         
-        // Animate effect - duração otimizada
+        // Animate effect - duração mínima
         const startTime = Date.now();
         const animate = () => {
             const elapsed = Date.now() - startTime;
-            const progress = elapsed / 1200; // Duração otimizada para 1.2 segundos
+            const progress = elapsed / 600; // Duração reduzida para 600ms
             
             if (progress < 1) {
                 // Efeito principal pulsa
@@ -1024,11 +1024,11 @@ class NeuralSimulation {
                 waves.forEach(wave => this.scene.remove(wave));
                 this.scene.remove(depolarLight);
                 
-                // Reset for next cycle if still playing
+                // Reset for next cycle if still playing - transição imediata
                 if (this.isPlaying) {
                     setTimeout(() => {
                         this.resetForNextCycle();
-                    }, 800); // Tempo otimizado entre ciclos
+                    }, 200); // Tempo mínimo entre ciclos
                 }
             }
         };
@@ -1061,11 +1061,11 @@ class NeuralSimulation {
             }
         });
         
-        // Start new action potential - tempo otimizado entre ciclos
+        // Start new action potential - ciclo contínuo
         if (this.isPlaying) {
             setTimeout(() => {
                 this.startActionPotential();
-            }, 2500); // Tempo balanceado para fluidez
+            }, 1200); // Ciclo muito mais rápido
         }
     }
     
