@@ -60,6 +60,9 @@ class NeuralSimulation {
         
         document.getElementById('canvas-container').appendChild(this.renderer.domElement);
         
+        // Add mouse controls for camera
+        this.setupMouseControls();
+        
         // Handle window resize
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
@@ -538,6 +541,61 @@ class NeuralSimulation {
         this.scene.add(particles);
         
         this.ambientParticles = particles;
+    }
+    
+    setupMouseControls() {
+        this.mouseControls = {
+            isDragging: false,
+            previousMouse: { x: 0, y: 0 },
+            rotation: { x: 0, y: 0 },
+            distance: 15
+        };
+        
+        const canvas = this.renderer.domElement;
+        
+        canvas.addEventListener('mousedown', (event) => {
+            this.mouseControls.isDragging = true;
+            this.mouseControls.previousMouse = { x: event.clientX, y: event.clientY };
+        });
+        
+        canvas.addEventListener('mousemove', (event) => {
+            if (!this.mouseControls.isDragging) return;
+            
+            const deltaX = event.clientX - this.mouseControls.previousMouse.x;
+            const deltaY = event.clientY - this.mouseControls.previousMouse.y;
+            
+            this.mouseControls.rotation.y -= deltaX * 0.01;
+            this.mouseControls.rotation.x -= deltaY * 0.01;
+            
+            // Limitar rotação vertical
+            this.mouseControls.rotation.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, this.mouseControls.rotation.x));
+            
+            this.updateCameraPosition();
+            
+            this.mouseControls.previousMouse = { x: event.clientX, y: event.clientY };
+        });
+        
+        canvas.addEventListener('mouseup', () => {
+            this.mouseControls.isDragging = false;
+        });
+        
+        canvas.addEventListener('wheel', (event) => {
+            this.mouseControls.distance += event.deltaY * 0.01;
+            this.mouseControls.distance = Math.max(5, Math.min(30, this.mouseControls.distance));
+            this.updateCameraPosition();
+            event.preventDefault();
+        });
+    }
+    
+    updateCameraPosition() {
+        if (this.currentCameraTarget === 'overview') {
+            const x = Math.cos(this.mouseControls.rotation.y) * Math.cos(this.mouseControls.rotation.x) * this.mouseControls.distance;
+            const y = Math.sin(this.mouseControls.rotation.x) * this.mouseControls.distance;
+            const z = Math.sin(this.mouseControls.rotation.y) * Math.cos(this.mouseControls.rotation.x) * this.mouseControls.distance;
+            
+            this.camera.position.set(x, y, z);
+            this.camera.lookAt(0, 0, 0);
+        }
     }
     
     setupControls() {
@@ -1026,15 +1084,9 @@ class NeuralSimulation {
             this.ambientParticles.rotation.y += 0.001;
         }
         
-        // Camera orbit when in overview mode - movimento mais lento e suave
+        // Câmera controlada manualmente no modo overview
         if (this.currentCameraTarget === 'overview') {
-            const radius = 15;
-            const speed = 0.0003; // Reduzido de 0.001 para 0.0003 (3x mais lento)
-            const height = 5 + Math.sin(this.time * speed * 2) * 2; // Variação suave na altura
-            
-            this.camera.position.x = Math.cos(this.time * speed) * radius;
-            this.camera.position.z = Math.sin(this.time * speed) * radius;
-            this.camera.position.y = height;
+            // A posição da câmera agora é controlada pelos controles do mouse
             this.camera.lookAt(0, 0, 0);
         }
         
