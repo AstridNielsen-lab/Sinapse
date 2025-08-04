@@ -15,6 +15,8 @@ class NeuralSimulation {
         this.labelsVisible = true;
         this.currentStep = 0;
         this.time = 0;
+        this.loopCount = 0;
+        this.maxLoops = 3; // Limitar a 3 ciclos
         
         this.cameraTargets = {
             overview: { position: [0, 5, 15], target: [0, 0, 0] },
@@ -139,11 +141,12 @@ class NeuralSimulation {
         const somaMaterial = new THREE.MeshPhysicalMaterial({
             color: config.color,
             transparent: true,
-            opacity: 0.7,
+            opacity: 0.3, // Muito mais transparente
             roughness: 0.1,
             metalness: 0.1,
-            transmission: 0.3,
-            thickness: 0.5
+            transmission: 0.7, // Mais transmissão
+            thickness: 0.2, // Mais fino
+            wireframe: false // Manter sólido para o soma
         });
         const soma = new THREE.Mesh(somaGeometry, somaMaterial);
         soma.castShadow = true;
@@ -155,9 +158,10 @@ class NeuralSimulation {
         const nucleusMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
             transparent: true,
-            opacity: 0.3,
+            opacity: 0.15, // Mais transparente
             emissive: 0x222244,
-            emissiveIntensity: 0.2
+            emissiveIntensity: 0.1, // Menos emissão
+            wireframe: true // Wireframe para leveza
         });
         const nucleus = new THREE.Mesh(nucleusGeometry, nucleusMaterial);
         neuronGroup.add(nucleus);
@@ -175,9 +179,10 @@ class NeuralSimulation {
         const axonMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x66aaff,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.4, // Mais transparente
             roughness: 0.2,
-            metalness: 0.1
+            metalness: 0.1,
+            wireframe: true // Wireframe para leveza
         });
         const axon = new THREE.Mesh(axonGeometry, axonMaterial);
         axon.castShadow = true;
@@ -204,8 +209,9 @@ class NeuralSimulation {
             const dendriteMaterial = new THREE.MeshPhysicalMaterial({
                 color: config.color,
                 transparent: true,
-                opacity: 0.6,
-                roughness: 0.3
+                opacity: 0.3, // Mais transparente
+                roughness: 0.3,
+                wireframe: true // Wireframe para leveza
             });
             const dendrite = new THREE.Mesh(dendriteGeometry, dendriteMaterial);
             neuronGroup.add(dendrite);
@@ -245,9 +251,10 @@ class NeuralSimulation {
         const cleftMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x2244aa,
             transparent: true,
-            opacity: 0.1,
-            transmission: 0.8,
-            thickness: 0.1
+            opacity: 0.05, // Quase invisível
+            transmission: 0.9,
+            thickness: 0.05,
+            wireframe: true // Wireframe para leveza
         });
         const cleft = new THREE.Mesh(cleftGeometry, cleftMaterial);
         synapseGroup.add(cleft);
@@ -257,8 +264,9 @@ class NeuralSimulation {
         const preTerminalMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x4488ff,
             transparent: true,
-            opacity: 0.6,
-            roughness: 0.2
+            opacity: 0.3, // Mais transparente
+            roughness: 0.2,
+            wireframe: true // Wireframe para leveza
         });
         const preTerminal = new THREE.Mesh(preTerminalGeometry, preTerminalMaterial);
         preTerminal.position.x = -1;
@@ -269,8 +277,9 @@ class NeuralSimulation {
         const postTerminalMaterial = new THREE.MeshPhysicalMaterial({
             color: 0x88ff44,
             transparent: true,
-            opacity: 0.6,
-            roughness: 0.2
+            opacity: 0.3, // Mais transparente
+            roughness: 0.2,
+            wireframe: true // Wireframe para leveza
         });
         const postTerminal = new THREE.Mesh(postTerminalGeometry, postTerminalMaterial);
         postTerminal.position.x = 1;
@@ -296,11 +305,12 @@ class NeuralSimulation {
             const vesicleMaterial = new THREE.MeshPhysicalMaterial({
                 color: 0xff88ff,
                 transparent: true,
-                opacity: 0.8,
+                opacity: 0.5, // Mais transparente
                 emissive: 0x442244,
-                emissiveIntensity: 0.3,
+                emissiveIntensity: 0.2, // Menos emissão
                 roughness: 0.1,
-                metalness: 0.2
+                metalness: 0.2,
+                wireframe: true // Wireframe para leveza
             });
             
             const vesicle = new THREE.Mesh(vesicleGeometry, vesicleMaterial);
@@ -367,11 +377,12 @@ class NeuralSimulation {
         const poreMaterial = new THREE.MeshPhysicalMaterial({
             color: color,
             transparent: true,
-            opacity: 0.8,
+            opacity: 0.4, // Mais transparente
             emissive: color,
-            emissiveIntensity: 0.2,
+            emissiveIntensity: 0.1, // Menos emissão
             metalness: 0.3,
-            roughness: 0.1
+            roughness: 0.1,
+            wireframe: true // Wireframe para leveza
         });
         const pore = new THREE.Mesh(poreGeometry, poreMaterial);
         pore.rotation.z = Math.PI / 2;
@@ -383,8 +394,9 @@ class NeuralSimulation {
             const proteinMaterial = new THREE.MeshPhysicalMaterial({
                 color: color,
                 transparent: true,
-                opacity: 0.6,
-                roughness: 0.2
+                opacity: 0.3, // Mais transparente
+                roughness: 0.2,
+                wireframe: true // Wireframe para leveza
             });
             const protein = new THREE.Mesh(proteinGeometry, proteinMaterial);
             
@@ -433,9 +445,10 @@ class NeuralSimulation {
         const bodyMaterial = new THREE.MeshPhysicalMaterial({
             color: color,
             transparent: true,
-            opacity: 0.7,
+            opacity: 0.4, // Mais transparente
             roughness: 0.2,
-            metalness: 0.1
+            metalness: 0.1,
+            wireframe: true // Wireframe para leveza
         });
         const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
         receptorGroup.add(body);
@@ -445,9 +458,10 @@ class NeuralSimulation {
         const siteMaterial = new THREE.MeshPhysicalMaterial({
             color: 0xffffff,
             transparent: true,
-            opacity: 0.6,
+            opacity: 0.3, // Mais transparente
             emissive: color,
-            emissiveIntensity: 0.1
+            emissiveIntensity: 0.05, // Menos emissão
+            wireframe: true // Wireframe para leveza
         });
         const site = new THREE.Mesh(siteGeometry, siteMaterial);
         site.position.x = -0.08;
@@ -626,6 +640,7 @@ class NeuralSimulation {
         button.textContent = this.isPlaying ? '⏸ Pausar Simulação' : '▶ Iniciar Simulação';
         
         if (this.isPlaying) {
+            this.loopCount = 0; // Reset contador ao iniciar
             this.startActionPotential();
         }
     }
@@ -698,9 +713,17 @@ class NeuralSimulation {
     }
     
     startActionPotential() {
+        // Verificar se deve continuar o loop
+        if (this.loopCount >= this.maxLoops) {
+            this.isPlaying = false;
+            document.getElementById('playPause').textContent = '▶ Iniciar Simulação';
+            this.loopCount = 0; // Reset para próxima execução
+            return;
+        }
+        
         const actionPotential = {
             position: -8,
-            speed: 0.035, // Velocidade balanceada para ver todos os processos
+            speed: 0.040, // Ligeiramente mais rápido para fluidez
             amplitude: 1,
             active: true
         };
@@ -1061,11 +1084,12 @@ class NeuralSimulation {
             }
         });
         
-        // Start new action potential - ciclo educativo
+        // Start new action potential - ciclo educativo com controle
         if (this.isPlaying) {
+            this.loopCount++; // Incrementar contador de loops
             setTimeout(() => {
                 this.startActionPotential();
-            }, 2000); // Pausa entre ciclos para observação
+            }, 1800); // Pausa ligeiramente menor para fluidez
         }
     }
     
